@@ -9,14 +9,16 @@ FilesSourcerPlugin reads Resources folder and copy contents of files to single s
 
 Add dependency:
 
+```swift
 dependencies: [
 ...
     .package(path: "../FilesSourcerPlugin")
 ...
 ],
+```
 
 Update config:
-
+```swift
 let customSource = CustomSource()
 
 let multipleSources = LeafSources()
@@ -33,7 +35,10 @@ struct CustomSource: LeafSource {
         return eventLoop.future(result: Result.success(ByteBuffer(string: Files.index)))
     }
 }
+```
 
 # Build
 
+```shell
 swift package --allow-writing-to-package-directory fileSourcer
+```
