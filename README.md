@@ -40,5 +40,5 @@ struct CustomSource: LeafSource {
 # Build
 
 ```shell
-swift package --allow-writing-to-package-directory fileSourcer
+swift package --allow-writing-to-package-directory filesSourcer
 ```
