@@ -16,7 +16,7 @@ public struct FilesSourcerMidleware: Middleware {
     
     public func respond(to request: Vapor.Request, chainingTo next: Vapor.Responder) -> NIOCore.EventLoopFuture<Vapor.Response> {
         // make a copy of the percent-decoded path
-        guard var path = request.url.path.removingPercentEncoding else {
+        guard let path = request.url.path.removingPercentEncoding else {
             return request.eventLoop.makeFailedFuture(Abort(.badRequest))
         }
 
@@ -24,14 +24,16 @@ public struct FilesSourcerMidleware: Middleware {
         guard !path.contains("../") else {
             return request.eventLoop.makeFailedFuture(Abort(.forbidden))
         }
+        
+        print("FilesSourcerMidleware path \(path)")
 
         // check if path exists and whether it is a directory
-        guard let fileData: Data = files.dict[path] else {
+        guard let fileData: Data = files.files[path] else {
             return next.respond(to: request)
         }
                 
         // Create empty headers array.
-        var headers: HTTPHeaders = [:]
+        let headers: HTTPHeaders = [:]
         
         // Create the HTTP response.
         let response = Response(status: .ok, headers: headers)

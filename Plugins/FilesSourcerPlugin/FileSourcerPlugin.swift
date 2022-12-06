@@ -1,10 +1,10 @@
-import PackagePlugin
 import Foundation
+import PackagePlugin
 
 @main
 struct FilesSourcerPlugin: CommandPlugin {
     
-    private let filesTemplate: String =
+    private let template: String =
 """
 // Generated source file
 
@@ -14,25 +14,20 @@ import FilesSourcer
 struct Files: FilesSourcer {
     static let shared = Files()
 
-    var dict: [String : Data] = [
-        {{INDEXX}}
+    var files: [String : Data] = [
+        {{#FILES}}
+        "{{FILE_PATH}}" : Data([{{FILE_DATA}}]),
+        {{/FILES}}
     ]
     
     private init() {}
 }
 
 """
-    
-    private let filesTemplateContent: String =
-"""
-        "{{INDEXX_PATH}}": Data([{{INDEXX_DATA}}]),
-        
-"""
         
     func performCommand(context: PluginContext, arguments: [String]) throws {
         let fileSource = context.package.directory.appending("Sources").appending("App").appending("Files.swift")
-        var fileContent = filesTemplate
-        var indexes: String = ""
+        var filesData: [Any] = []
         
         for resource in ["Resources", "Public"] {
             let resourcesPath = context.package.directory.appending(resource)
@@ -48,16 +43,21 @@ struct Files: FilesSourcer {
                 print("itemPathUrl \(itemPathUrl)")
                 
                 let dataS = try Data(contentsOf: itemPathUrl).hexEncodedString()
-                                                
-                indexes += filesTemplateContent
-                    .replacingOccurrences(of: "{{INDEXX_PATH}}", with: itemPathUrl.absoluteString)
-                    .replacingOccurrences(of: "{{INDEXX_DATA}}", with: dataS)
+                
+                var fileData: [String : Any] = [:]
+                fileData["FILE_PATH"] = itemPathUrl.absoluteString
+                fileData["FILE_DATA"] = dataS
+                
+                filesData.append(fileData)
             }
         }
                 
-        fileContent = fileContent.replacingOccurrences(of: "{{INDEXX}}", with: indexes)
+        let context: [String : Any] = ["FILES" : filesData]
+                        
+        let fileContent = scafold(data: context)
         
-        try fileContent.data(using: .utf8)?.write(to: URL(string: "file://" + fileSource.string)!)
+        let filePath = URL(string: "file://" + fileSource.string)!
+        try fileContent.data(using: .utf8)?.write(to: filePath)
     }
     
     private func getItemsFromDirectory(directory: String) -> [String] {
@@ -74,7 +74,7 @@ struct Files: FilesSourcer {
                 
                 let itemPath = directory + "/" + item
                 
-                var isDirectory = directoryExistsAtPath(itemPath)
+                let isDirectory = directoryExistsAtPath(itemPath)
                 if isDirectory {
                     continue
                 }
@@ -95,6 +95,15 @@ struct Files: FilesSourcer {
         let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
         
         return exists && isDirectory.boolValue
+    }
+    
+    private func scafold(data: [String : Any]) -> String {
+        var parser = MustacheParser()
+
+        let tree = parser.parse(string: template)
+        let result = tree.render(object: data)
+        
+        return result
     }
 }
 

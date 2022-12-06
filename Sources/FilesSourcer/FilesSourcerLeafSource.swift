@@ -6,7 +6,7 @@
 //
 
 import Vapor
-import Leaf
+import LeafKit
 
 public struct FilesSourcerLeafSource: LeafSource {
     let files: FilesSourcer
@@ -15,8 +15,10 @@ public struct FilesSourcerLeafSource: LeafSource {
         self.files = files
     }
 
-    func file(template: String, escape: Bool, on eventLoop: EventLoop) -> EventLoopFuture<ByteBuffer> {
-        guard let fileData: Data = files.dict[template] else {
+    public func file(template: String, escape: Bool, on eventLoop: EventLoop) -> EventLoopFuture<ByteBuffer> {
+        print("FilesSourcerLeafSource template \(template)")
+        
+        guard let fileData: Data = files.files[template] else {
             return eventLoop.future(result: Result.failure(LeafError(.noTemplateExists(template))))
         }
         

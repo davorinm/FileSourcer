@@ -8,6 +8,5 @@
 import Foundation
 
 public protocol FilesSourcer {
-    /// Filename: data
-    var dict: [String: Data] { get }
+    var files: [String: Data] { get }
 }
